@@ -1,0 +1,1019 @@
+---
+title: "WLFF Study: Baseline Data Analysis"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: united
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 10, fig.height = 6)
+```
+
+# 1. Introduction
+
+This document presents the baseline data analysis for the Wildland Firefighters (WLFF) Study conducted in Chile. The analysis includes:
+
+- Data import and cleaning
+- Variable creation and transformation
+- Heat Strain Score Index (HSSI) calculation
+- Health outcomes assessment
+- Visualizations and descriptive statistics
+
+# 2. Load Required Libraries
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(haven)
+library(dplyr)
+library(car)
+library(ggplot2)
+library(forcats)
+library(knitr)
+```
+
+# 3. Data Import
+
+```{r import-data}
+# Set working directory (adjust as needed)
+# setwd("your/working/directory")
+
+# Import Excel file
+df <- read_excel("C:/Users/javie/Box/WlidlandFireFighter/Survey/Analysis/Wildland+Firefighters+Survey+in+Chile_February+24,+2025_10.43.xlsx", 
+                 sheet = "Sheet0")
+
+# Convert column names to lowercase
+names(df) <- tolower(names(df))
+
+# Save as RDS file
+# saveRDS(df, "WLFFSurvey_jf_240225.rds")
+```
+
+# 4. Variable Renaming and Selection
+
+```{r rename-variables}
+df <- df %>%
+  rename(
+    part = qid12,
+    air_temp = q1,
+    hum_typ = q2,
+    radiant_temp = q3,
+    circu_air = q4,
+    eff_lvl = q5,
+    sweat = q6,
+    fatigue = q7,
+    thirst = q8,
+    heat_perf = q9,
+    work_size = q10,
+    vent = q11,
+    work_loc = q12,
+    type_unif = q13,
+    color_unif = q14,
+    mat_unif = q15,
+    scba_ppe = q16_1,
+    ffr_ppe = q16_2,
+    hfr_ppe = q16_3,
+    boots_ppe = q16_4,
+    apron_ppe = q16_5,
+    mask_ppe = q16_6,
+    faceshi_ppe = q16_7,
+    glove_ppe = q16_8,
+    helmet_ppe = q16_9,
+    ear_ppe = q16_10,
+    none_ppe = q16_11,
+    posture = q17,
+    head_sym = q18_1,
+    diz_sym = q18_2,
+    weak_sym = q18_3,
+    muscl_sym = q18_4,
+    acne_sym = q18_5,
+    ment_sym = q18_6,
+    none_sym = q18_7,
+    wind_fac = q19_1,
+    hum_fac = q19_4,
+    radiant_fac = q19_5,
+    air_temp_fac = q19_6,
+    clothing_fac = q19_7,
+    phy_fac = q19_8,
+    accli_fac = q19_9,
+    pollut_fac = q19_10,
+    heat_freq = q20,
+    heat_dur = q21,
+    heat_train = q22,
+    job = q23,
+    job_text = q23_3_text,
+    wlff_exp = q24_1,
+    sbs_exp = q24_2,
+    cbs_exp = q24_3,
+    saw_exp = q24_4,
+    other_exp = q24_5,
+    other_exp_text = q24_5_text,
+    wrk_days = q25_1,
+    rst_days = q26_1,
+    wrk_hrs_day = q27_1,
+    wrk_hrs = q28_1,
+    ovt_hrs = q29_1,
+    off_hrs = q30,
+    base_loc = q31,
+    comp = q32,
+    comp_text = q32_4_text,
+    msd_pain = q33,
+    neck_pain = q34_1,
+    ue_pain = q34_2,
+    back_pain = q34_3,
+    le_pain = q34_4,
+    pain_freq = q35,
+    wc_pain = q36,
+    wrk_inj = q37,
+    sprain_inj = q38_1,
+    fract_inj = q38_4,
+    muscl_inj = q38_5,
+    burns_inj = q38_6,
+    cuts_inj = q38_7,
+    bruises_inj = q38_8,
+    overu_inj = q38_9,
+    dislo_inj = q38_10,
+    back_inj = q38_11,
+    joint_inj = q38_12,
+    other_inj = q38_13,
+    no_inj = q38_14,
+    inj_text = q38_13_text,
+    persaf_conc = q39_1,
+    teamsaf_conc = q39_4,
+    hydr_conc = q39_5,
+    resp_conc = q39_6,
+    phyinj_conc = q39_7,
+    fatigue_conc = q39_8,
+    equip_conc = q39_9,
+    comu_conc = q39_10,
+    evcau_conc = q39_11,
+    localimp_conc = q39_12,
+    other_conc = q39_13,
+    conc_text = q39_13_text,
+    smoke = q40,
+    hbp = q41_1,
+    cholest = q41_2,
+    card_dis = q41_3,
+    asthma = q41_4,
+    copd = q41_5,
+    diabe = q41_6,
+    thyroid = q41_7,
+    covid = q41_8,
+    obesity = q41_9,
+    rhabdo = q41_10,
+    other_dis = q41_11,
+    dis_text = q41_11_text,
+    dehyd = q42,
+    water_drk = q43_1,
+    sport_drk = q43_4,
+    energy_drk = q43_5,
+    juice_drk = q43_6,
+    coffee_drk = q43_7,
+    other_drk = q43_8,
+    other_text = q43_8_text,
+    fluid_freq = q44,
+    fluid_freq_text = q44_7_text,
+    boss_prov = q45_1,
+    pers_prov = q45_4,
+    team_prov = q45_5,
+    other_prov = q45_6,
+    text_prov = q45_6_text,
+    soccer = q46_1,
+    gym = q46_2,
+    rest = q46_3,
+    walk = q46_4,
+    indoor = q46_5,
+    other_acti = q46_6,
+    activ_text = q46_6_text,
+    asthma_sym = q47_1,
+    breath_sym = q47_4,
+    chest_sym = q47_5,
+    irrit_sym = q47_6,
+    nasal_sym = q47_7,
+    throat_sym = q47_8,
+    other_sym = q47_9,
+    other_sym_text = q47_9_text,
+    rep_hlth = q48_1,
+    res_hlth = q48_2,
+    neu_hlth = q48_3,
+    msd_hlth = q48_4,
+    ment_hlth = q48_5,
+    renal_hlth = q48_6,
+    hear_hlth = q48_7,
+    card_hlth = q48_8,
+    other_hlth = q48_9,
+    other_hlth_text = q48_9_text,
+    weight = q49,
+    height = q50,
+    freq_bfl_r = q51_1,
+    freq_bfl_t = q51_2,
+    freq_mant = q51_3,
+    freq_hose = q51_4,
+    freq_clean = q51_5,
+    freq_train = q51_6,
+    freq_resc = q51_7,
+    freq_wflat = q51_8,
+    freq_wslope = q51_9,
+    freq_other_task = q51_10,
+    freq_other_task_text = q51_10_text,
+    dur_bfl_r = q52_1,
+    dur_bfl_t = q52_2,
+    dur_mant = q52_3,
+    dur_hose = q52_4,
+    dur_clean = q52_5,
+    dur_train = q52_6,
+    dur_resc = q52_7,
+    dur_wflat = q52_8,
+    dur_wslope = q52_9,
+    dur_other_task = q52_10,
+    dur_other_task_text = q52_10_text,
+    int_bfl_r = q53_1,
+    int_bfl_t = q53_2,
+    int_mant = q53_3,
+    int_hose = q53_4,
+    int_clean = q53_5,
+    int_train = q53_6,
+    int_resc = q53_7,
+    int_wflat = q53_8,
+    int_wslope = q53_9,
+    int_other_task = q53_10,
+    int_other_task_text = q53_10_text,
+    age = q54_1,
+    gen = q55,
+    marital = q56,
+    edu = q57
+  )
+
+# Select only relevant columns
+df <- df %>%
+  select(air_temp:edu)
+```
+
+# 5. Data Preparation and Variable Creation
+
+## 5.1 Numeric Conversions and BMI Calculation
+
+```{r numeric-conversions}
+# Convert numeric variables
+df$weight <- as.numeric(df$weight)
+df$height <- as.numeric(df$height)
+df$int_wslope <- as.numeric(df$int_wslope)
+
+# Calculate BMI
+df$bmi <- df$weight / ((df$height/100)^2)
+
+# Create BMI categories
+df$bmi_cat <- cut(df$bmi, 
+                  breaks = c(-Inf, 18.5, 25, 30, Inf),
+                  labels = c("Low", "Normal", "Overweight", "Obesity"))
+
+# Create age categories
+df$age_cat <- cut(df$age, 
+                  breaks = c(18, 30, 50, 66, Inf),
+                  labels = c("18-29", "30-49", "50-65", ">65"),
+                  right = FALSE)
+```
+
+## 5.2 Recode Frequency Variables
+
+```{r recode-frequency}
+# Function to recode frequency variables
+recode_freq <- function(x) {
+  x[x == 3] <- 7
+  x[x == 4] <- 11
+  x[x == 5] <- 20
+  x[x == 6] <- 0
+  return(x)
+}
+
+# Apply to all frequency variables
+freq_vars <- c("freq_bfl_r", "freq_bfl_t", "freq_mant", "freq_hose", 
+               "freq_clean", "freq_train", "freq_resc", "freq_wflat", "freq_wslope")
+
+df[freq_vars] <- lapply(df[freq_vars], recode_freq)
+```
+
+## 5.3 Recode Duration Variables
+
+```{r recode-duration}
+# Function to recode duration variables
+recode_dur <- function(x) {
+  x[x == 1] <- 0
+  x[x == 2] <- 1
+  x[x == 4] <- 6
+  return(x)
+}
+
+# Apply to all duration variables
+dur_vars <- c("dur_bfl_r", "dur_bfl_t", "dur_mant", "dur_hose", 
+              "dur_clean", "dur_train", "dur_resc", "dur_wflat", "dur_wslope")
+
+df[dur_vars] <- lapply(df[dur_vars], recode_dur)
+```
+
+# 6. Workload Index Calculation
+
+## 6.1 Calculate Workload (Frequency × Duration × Intensity)
+
+```{r workload-index}
+# Create workload indices for each task
+tasks <- c("bfl_r", "bfl_t", "mant", "hose", "clean", "train", "resc", "wflat", "wslope")
+
+for (task in tasks) {
+  # Calculate workload
+  df[[paste0("wkrl_", task)]] <- df[[paste0("freq_", task)]] * 
+                                  df[[paste0("dur_", task)]] * 
+                                  df[[paste0("int_", task)]]
+  
+  # Create tertile categories
+  df[[paste0("ter_wkrl_", task)]] <- cut(
+    df[[paste0("wkrl_", task)]], 
+    breaks = quantile(df[[paste0("wkrl_", task)]], probs = c(0, 1/3, 2/3, 1), na.rm = TRUE),
+    labels = c("Low", "Medium", "High"),
+    include.lowest = TRUE
+  )
+}
+```
+
+## 6.2 Calculate Temporal Index (Frequency × Duration)
+
+```{r temporal-index}
+for (task in tasks) {
+  # Calculate temporal workload
+  df[[paste0("tem_wkrl_", task)]] <- df[[paste0("freq_", task)]] * 
+                                      df[[paste0("dur_", task)]]
+  
+  # Create tertile categories
+  df[[paste0("ter_tem_wkrl_", task)]] <- cut(
+    df[[paste0("tem_wkrl_", task)]], 
+    breaks = quantile(df[[paste0("tem_wkrl_", task)]], probs = c(0, 1/3, 2/3, 1), na.rm = TRUE),
+    labels = c("Low", "Medium", "High"),
+    include.lowest = TRUE
+  )
+}
+```
+
+# 7. Heat Strain Score Index (HSSI)
+
+## 7.1 Create Component Scores
+
+```{r hssi-scores}
+# Environmental scores
+df$air_scr <- case_when(
+  df$air_temp == 1 ~ -3, df$air_temp == 2 ~ -2, df$air_temp == 3 ~ -1,
+  df$air_temp == 4 ~ 0, df$air_temp == 5 ~ 1, df$air_temp == 6 ~ 2,
+  df$air_temp == 7 ~ 3, TRUE ~ NA_real_
+)
+
+df$hum_scr <- case_when(
+  df$hum_typ == 1 ~ -2, df$hum_typ == 2 ~ 0, df$hum_typ == 3 ~ 1,
+  df$hum_typ == 4 ~ 2, df$hum_typ == 5 ~ 3, df$hum_typ == 6 ~ 4,
+  TRUE ~ NA_real_
+)
+
+df$rdt_scr <- case_when(
+  df$radiant_temp == 1 ~ -3, df$radiant_temp == 2 ~ -2, df$radiant_temp == 3 ~ -1,
+  df$radiant_temp == 4 ~ 0, df$radiant_temp == 5 ~ 1, df$radiant_temp == 6 ~ 2,
+  df$radiant_temp == 7 ~ 3, TRUE ~ NA_real_
+)
+
+df$aircrc_scr <- case_when(
+  df$circu_air == 1 ~ -3, df$circu_air == 2 ~ -2, df$circu_air == 3 ~ -1,
+  df$circu_air == 4 ~ 1, df$circu_air == 5 ~ 2, df$circu_air == 6 ~ 3,
+  TRUE ~ NA_real_
+)
+
+# Effort and physiological scores
+df$eff_scr <- case_when(
+  df$eff_lvl == 1 ~ 0, df$eff_lvl == 2 ~ 1, df$eff_lvl == 3 ~ 2,
+  df$eff_lvl == 4 ~ 3, df$eff_lvl == 5 ~ 4, TRUE ~ NA_real_
+)
+
+df$sweat_scr <- case_when(
+  df$sweat == 1 ~ 0, df$sweat == 2 ~ 1, df$sweat == 3 ~ 2,
+  df$sweat == 4 ~ 3, df$sweat == 5 ~ 4, df$sweat == 6 ~ 5,
+  TRUE ~ NA_real_
+)
+
+df$fatigue_scr <- case_when(
+  df$fatigue == 1 ~ 0, df$fatigue == 2 ~ 1, df$fatigue == 3 ~ 2,
+  df$fatigue == 4 ~ 3, df$fatigue == 5 ~ 4, df$fatigue == 6 ~ 5,
+  TRUE ~ NA_real_
+)
+
+df$thirst_scr <- case_when(
+  df$thirst == 1 ~ 0, df$thirst == 2 ~ 1, df$thirst == 3 ~ 2,
+  df$thirst == 4 ~ 3, df$thirst == 5 ~ 4, TRUE ~ NA_real_
+)
+
+df$heat_scr <- case_when(
+  df$heat_perf == 1 ~ 0, df$heat_perf == 2 ~ 1, df$heat_perf == 3 ~ 2,
+  df$heat_perf == 4 ~ 3, df$heat_perf == 5 ~ 4, TRUE ~ NA_real_
+)
+
+# Work environment scores
+df$wrksz_scr <- case_when(
+  df$work_size == 1 ~ 0, df$work_size == 2 ~ 1, df$work_size == 3 ~ 2,
+  TRUE ~ NA_real_
+)
+
+df$vent_scr <- case_when(
+  df$vent == 1 ~ -1, df$vent == 2 ~ 0, df$vent == 3 ~ 1,
+  df$vent == 4 ~ 2, TRUE ~ NA_real_
+)
+
+df$wrkloc_scr <- case_when(
+  df$work_loc == 1 ~ 0, df$work_loc == 2 ~ 2, df$work_loc == 3 ~ 1,
+  TRUE ~ NA_real_
+)
+
+# Uniform scores
+df$unif_scr <- case_when(
+  df$type_unif == 1 ~ 0, df$type_unif == 2 ~ 1, df$type_unif == 3 ~ 2,
+  df$type_unif == 4 ~ 3, df$type_unif == 5 ~ 5, df$type_unif == 6 ~ 7,
+  TRUE ~ NA_real_
+)
+
+df$unifcol_scr <- case_when(
+  df$color_unif == 1 ~ 0, df$color_unif == 2 ~ 1, TRUE ~ NA_real_
+)
+
+df$unifmat_scr <- case_when(
+  df$mat_unif == 1 ~ 0, df$mat_unif == 2 ~ 2, df$mat_unif == 3 ~ 1,
+  TRUE ~ NA_real_
+)
+
+# Posture score
+df$post_scr <- case_when(
+  df$posture == 1 ~ 1, df$posture == 2 ~ 2, df$posture == 3 ~ 3,
+  df$posture == 4 ~ 4, TRUE ~ NA_real_
+)
+```
+
+## 7.2 PPE Scores
+
+```{r ppe-scores}
+# Convert PPE variables and create scores
+ppe_vars <- c("scba", "ffr", "hfr", "boots", "apron", "mask", 
+              "faceshi", "glove", "helmet", "ear", "none")
+
+for (var in ppe_vars) {
+  df[[paste0(var, "_ppe")]] <- as.numeric(df[[paste0(var, "_ppe")]])
+  weight <- ifelse(var == "scba", 2, ifelse(var == "none", 0, 1.5))
+  df[[paste0(var, "_scr")]] <- ifelse(df[[paste0(var, "_ppe")]] == 1, weight, 0)
+}
+
+# Calculate total PPE score
+df$ppe_scr <- rowSums(df[paste0(ppe_vars, "_scr")], na.rm = TRUE)
+```
+
+## 7.3 Symptom Scores
+
+```{r symptom-scores}
+# Convert symptom variables and create scores
+symptom_vars <- c("head", "diz", "weak", "muscl", "acne", "ment")
+
+for (var in symptom_vars) {
+  df[[paste0(var, "_sym")]] <- as.numeric(df[[paste0(var, "_sym")]])
+  df[[paste0(var, "_scr")]] <- ifelse(df[[paste0(var, "_sym")]] == 1, 0.5, 0)
+}
+
+df$none_sym <- as.numeric(df$none_sym)
+df$nonesymp_scr <- df$none_sym
+
+# Calculate total symptom score
+df$symp_scr <- rowSums(df[c(paste0(symptom_vars, "_sym"), "nonesymp_scr")], na.rm = TRUE)
+```
+
+## 7.4 Calculate Final HSSI Score
+
+```{r hssi-final}
+# Apply weights to each component
+df$air_scr_f <- df$air_scr * 0.73
+df$hum_scr_f <- df$hum_scr * 0.67
+df$rdt_scr_f <- df$rdt_scr * 0.65
+df$aircrc_scr_f <- df$aircrc_scr * 0.61
+df$eff_scr_f <- df$eff_scr * 0.63
+df$sweat_scr_f <- df$sweat_scr * 0.67
+df$fatigue_scr_f <- df$fatigue_scr * 0.57
+df$thirst_scr_f <- df$thirst_scr * 0.84
+df$heat_scr_f <- df$heat_scr * 0.81
+df$wrksz_scr_f <- df$wrksz_scr * 0.28
+df$vent_scr_f <- df$vent_scr * 0.68
+df$wrkloc_scr_f <- df$wrkloc_scr * 0.31
+df$unif_scr_f <- df$unif_scr * 0.36
+df$unifcol_scr_f <- df$unifcol_scr * 0.29
+df$unifmat_scr_f <- df$unifmat_scr * 0.33
+df$ppe_scr_f <- df$ppe_scr * 0.50
+df$post_scr_f <- df$post_scr * 0.37
+df$symp_scr_f <- df$symp_scr * 0.57
+
+# Calculate total HSSI score
+df$HSSI_scr <- df$air_scr_f + df$hum_scr_f + df$rdt_scr_f + df$aircrc_scr_f +
+               df$eff_scr_f + df$sweat_scr_f + df$fatigue_scr_f + df$thirst_scr_f +
+               df$heat_scr_f + df$wrksz_scr_f + df$vent_scr_f + df$wrkloc_scr_f +
+               df$unif_scr_f + df$unifcol_scr_f + df$unifmat_scr_f + df$ppe_scr_f +
+               df$post_scr_f + df$symp_scr_f
+
+# Create HSSI categories
+df$HSSI_category <- case_when(
+  df$HSSI_scr <= 13.5 ~ "Safe Level",
+  df$HSSI_scr > 13.5 & df$HSSI_scr <= 18.0 ~ "Caution Level",
+  df$HSSI_scr > 18.0 ~ "Danger Level",
+  TRUE ~ NA_character_
+)
+df$HSSI_category <- factor(df$HSSI_category, 
+                           levels = c("Safe Level", "Caution Level", "Danger Level"))
+
+# Create binary HSSI
+df$HSSI_binary <- case_when(
+  df$HSSI_scr <= 13.5 ~ "Safe Level",
+  df$HSSI_scr > 13.5 ~ "Unsafe Level",
+  TRUE ~ NA_character_
+)
+df$HSSI_binary <- factor(df$HSSI_binary, levels = c("Safe Level", "Unsafe Level"))
+
+df$HSSI_final <- ifelse(df$HSSI_scr <= 13.5, 0, 1)
+df$HSSI_final <- factor(df$HSSI_final, levels = c(0, 1), 
+                        labels = c("Safe Level", "Unsafe Level"))
+```
+
+## 7.5 HSSI Subscores
+
+```{r hssi-subscores}
+# Predictors subscore
+df$pred_hssi_sub <- df$air_scr_f + df$hum_scr_f + df$rdt_scr_f + df$aircrc_scr_f
+
+# Moderators subscore
+df$mod_hssi_sub <- df$eff_scr_f + df$wrksz_scr_f + df$vent_scr_f + df$wrkloc_scr_f +
+                   df$unif_scr_f + df$unifcol_scr_f + df$unifmat_scr_f + 
+                   df$ppe_scr_f + df$post_scr_f
+
+# Outcomes subscore
+df$out_hssi_sub <- df$sweat_scr_f + df$fatigue_scr_f + df$thirst_scr_f + 
+                   df$heat_scr_f + df$symp_scr_f
+```
+
+# 8. Health Outcomes
+
+## 8.1 Pain Outcomes
+
+```{r pain-outcomes}
+# Calculate pain sum and scaled score
+df$pain_sum <- rowSums(df[c("neck_pain", "ue_pain", "back_pain", "le_pain")], na.rm = TRUE)
+df$pain_sum_scaled <- df$pain_sum / 4
+
+# Pain prevalence
+df$pain_prev <- ifelse(df$pain_sum_scaled < 2, 0, 1)
+df$pain_prev <- factor(df$pain_prev, levels = c(0, 1), labels = c("Absent", "Present"))
+
+# Pain severity
+df$pain_sev <- ifelse(df$pain_sum_scaled < 5, 0, 1)
+df$pain_sev <- factor(df$pain_sev, levels = c(0, 1), labels = c("Mild", "Severe"))
+
+# Binary pain indicator
+df$pain_binary <- (df$neck_pain >= 4 | df$ue_pain >= 4 | 
+                   df$back_pain >= 4 | df$le_pain >= 4)
+
+# Pain prevalence by body region
+df$neck_pain_pre <- ifelse(!is.na(df$neck_pain) & df$neck_pain >= 4, 1, 0)
+df$ue_pain_pre <- ifelse(!is.na(df$ue_pain) & df$ue_pain >= 4, 1, 0)
+df$back_pain_pre <- ifelse(!is.na(df$back_pain) & df$back_pain >= 4, 1, 0)
+df$le_pain_pre <- ifelse(!is.na(df$le_pain) & df$le_pain >= 4, 1, 0)
+```
+
+# 9. Descriptive Statistics
+
+```{r descriptive-stats}
+# Summary statistics for key variables
+summary_stats <- df %>%
+  select(age, bmi, HSSI_scr, pain_sum_scaled) %>%
+  summary()
+
+print(summary_stats)
+
+# Frequency tables
+table(df$HSSI_category)
+table(df$pain_prev)
+table(df$bmi_cat)
+```
+
+# 10. Visualizations
+
+## 10.1 HSSI Component Scores
+
+```{r hssi-boxplot, fig.width=12, fig.height=8}
+hssi_factors <- df %>%
+  select(air_scr, hum_scr, rdt_scr, aircrc_scr, eff_scr, sweat_scr, 
+         fatigue_scr, thirst_scr, heat_scr, wrksz_scr, vent_scr, 
+         wrkloc_scr, unif_scr, unifcol_scr, unifmat_scr, ppe_scr, 
+         post_scr, symp_scr) %>%
+  pivot_longer(everything(), names_to = "Factor", values_to = "Score")
+
+ggplot(hssi_factors, aes(x = Factor, y = Score)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10)) +
+  labs(title = "HSSI Component Scores Distribution",
+       x = "Factor",
+       y = "Score")
+```
+
+## 10.2 HSSI Score Distribution
+
+```{r hssi-histogram, fig.width=10, fig.height=6}
+ggplot(df, aes(x = HSSI_scr)) +
+  geom_histogram(binwidth = 1, fill = "lightblue", color = "black") +
+  geom_vline(xintercept = 13.5, color = "orange", linetype = "dashed", size = 1) +
+  geom_vline(xintercept = 18, color = "red", linetype = "dashed", size = 1) +
+  annotate("text", x = 13.5, y = Inf, label = "Caution threshold", 
+           color = "orange", hjust = -0.1, vjust = 2) +
+  annotate("text", x = 18, y = Inf, label = "Danger threshold", 
+           color = "red", hjust = -0.1, vjust = 4) +
+  theme_minimal() +
+  labs(title = "HSSI Score Distribution",
+       x = "HSSI Score",
+       y = "Frequency")
+```
+
+## 10.3 Pain Intensity by Body Region
+
+```{r pain-boxplot, fig.width=10, fig.height=6}
+pain_data <- df %>%
+  select(neck_pain, ue_pain, back_pain, le_pain) %>%
+  pivot_longer(everything(), names_to = "Region", values_to = "Pain_Score") %>%
+  mutate(Region = recode(Region,
+                         "neck_pain" = "Neck/Shoulder",
+                         "ue_pain" = "Upper Extremities",
+                         "back_pain" = "Back",
+                         "le_pain" = "Lower Extremities"))
+
+ggplot(pain_data, aes(x = Region, y = Pain_Score, fill = Region)) +
+  geom_boxplot(alpha = 0.7) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Pain Intensity Distribution by Body Region",
+       x = "",
+       y = "Pain Score (0-10)")
+```
+
+## 10.4 Perceived Health Risks Among WLFFs
+
+```{r health-risks, fig.width=12, fig.height=8}
+# Prepare data for health risks
+df_long <- df %>%
+  pivot_longer(
+    cols = c(rep_hlth, res_hlth, neu_hlth, msd_hlth,
+             ment_hlth, renal_hlth, hear_hlth, card_hlth),
+    names_to = "Category",
+    values_to = "Likelihood"
+  ) %>%
+  mutate(Likelihood = case_when(
+    Likelihood == 1 ~ "Not likely",
+    Likelihood == 2 ~ "Somewhat likely",
+    Likelihood == 3 ~ "Very likely",
+    TRUE ~ NA_character_
+  )) %>%
+  mutate(Likelihood = factor(Likelihood,
+                             levels = c("Very likely", "Somewhat likely", "Not likely")))
+
+# Count responses
+df_counts <- df_long %>%
+  group_by(Category, Likelihood) %>%
+  summarise(Count = n(), .groups = "drop")
+
+# Create labels
+labels <- c(
+  res_hlth   = "Respiratory health",
+  rep_hlth   = "Reproductive health",
+  renal_hlth = "Kidney (renal) health",
+  neu_hlth   = "Neurological health",
+  msd_hlth   = "Musculoskeletal disorders",
+  ment_hlth  = "Mental health",
+  hear_hlth  = "Hearing loss",
+  card_hlth  = "Cardiovascular health"
+)
+
+# Plot
+ggplot(df_counts, aes(x = Category, y = Count, fill = Likelihood)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count),
+            position = position_stack(vjust = 0.5),
+            color = "black", size = 3) +
+  coord_flip() +
+  scale_x_discrete(labels = labels) +
+  scale_fill_manual(values = c("Very likely" = "red",
+                               "Somewhat likely" = "yellow",
+                               "Not likely" = "green")) +
+  labs(
+    title = "Perceived Health Risks Among WLFFs",
+    x = NULL,
+    y = "Number of Responses",
+    fill = "Perceived Likelihood"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+## 10.5 Relevant Factors Affecting Health and Performance
+
+```{r factors-health, fig.width=12, fig.height=8}
+# Prepare data for factors
+df_long2 <- df %>%
+  pivot_longer(
+    cols = c(wind_fac, hum_fac, radiant_fac, air_temp_fac,
+             clothing_fac, phy_fac, accli_fac, pollut_fac),
+    names_to = "Variable",
+    values_to = "Response"
+  )
+
+# Count responses per variable
+df_counts2 <- df_long2 %>%
+  group_by(Variable) %>%
+  summarise(Count = n(), .groups = "drop")
+
+# Create readable labels
+labels2 <- c(
+  wind_fac     = "Wind Speed",
+  hum_fac      = "% Humidity",
+  radiant_fac  = "Radiant Heat",
+  air_temp_fac = "Air Temperature",
+  clothing_fac = "Clothing",
+  phy_fac      = "Physical Activity",
+  accli_fac    = "Acclimatization",
+  pollut_fac   = "Air Pollution"
+)
+
+# Plot
+ggplot(df_counts2, aes(x = reorder(Variable, Count), y = Count, fill = Variable)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = Count), hjust = -0.2, size = 4) +
+  coord_flip() +
+  scale_x_discrete(labels = labels2) +
+  labs(
+    title = "Variables Considered Most Relevant for Health and Performance (n=357)",
+    x = NULL,
+    y = "Number of Responses"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none"
+  )
+```
+
+## 10.6 HSSI Category Distribution
+
+```{r hssi-category-bar, fig.width=10, fig.height=6}
+# Create frequency table
+hssi_freq <- df %>%
+  count(HSSI_category) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+ggplot(hssi_freq, aes(x = HSSI_category, y = n, fill = HSSI_category)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(n, "\n(", round(percentage, 1), "%)")), 
+            vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c("Safe Level" = "green", 
+                               "Caution Level" = "orange", 
+                               "Danger Level" = "red")) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Distribution of HSSI Categories",
+       x = "HSSI Category",
+       y = "Count")
+```
+
+## 10.7 Pain Prevalence by Body Region
+
+```{r pain-prevalence-bar, fig.width=10, fig.height=6}
+# Create data for pain prevalence
+pain_prev_data <- data.frame(
+  Region = c("Neck/Shoulder", "Upper Extremities", "Back", "Lower Extremities"),
+  Prevalence = c(
+    mean(df$neck_pain_pre, na.rm = TRUE) * 100,
+    mean(df$ue_pain_pre, na.rm = TRUE) * 100,
+    mean(df$back_pain_pre, na.rm = TRUE) * 100,
+    mean(df$le_pain_pre, na.rm = TRUE) * 100
+  )
+)
+
+ggplot(pain_prev_data, aes(x = reorder(Region, -Prevalence), y = Prevalence, fill = Region)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Prevalence, 1), "%")), 
+            vjust = -0.5, size = 4) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Pain Prevalence by Body Region (Pain Score ≥ 4)",
+       x = "Body Region",
+       y = "Prevalence (%)")
+```
+
+## 10.8 BMI Category Distribution
+
+```{r bmi-distribution, fig.width=10, fig.height=6}
+bmi_freq <- df %>%
+  count(bmi_cat) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+ggplot(bmi_freq, aes(x = bmi_cat, y = n, fill = bmi_cat)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(n, "\n(", round(percentage, 1), "%)")), 
+            vjust = -0.5, size = 4) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "BMI Category Distribution",
+       x = "BMI Category",
+       y = "Count")
+```
+
+# 11. Statistical Analysis Examples
+
+## 11.1 HSSI vs Demographics
+
+```{r hssi-demographics}
+# HSSI by age category
+hssi_age <- df %>%
+  group_by(age_cat) %>%
+  summarise(
+    Mean_HSSI = mean(HSSI_scr, na.rm = TRUE),
+    SD_HSSI = sd(HSSI_scr, na.rm = TRUE),
+    n = n()
+  )
+
+kable(hssi_age, digits = 2, caption = "HSSI Score by Age Category")
+
+# HSSI by BMI category
+hssi_bmi <- df %>%
+  group_by(bmi_cat) %>%
+  summarise(
+    Mean_HSSI = mean(HSSI_scr, na.rm = TRUE),
+    SD_HSSI = sd(HSSI_scr, na.rm = TRUE),
+    n = n()
+  )
+
+kable(hssi_bmi, digits = 2, caption = "HSSI Score by BMI Category")
+```
+
+## 11.2 Logistic Regression Example
+
+```{r logistic-regression}
+# Example: HSSI prediction (commented out - uncomment to run)
+# model1 <- glm(HSSI_final ~ int_bfl_r + age + gen + bmi, 
+#               data = df, family = binomial(link = "logit"))
+# summary(model1)
+# 
+# # Odds ratios
+# exp(coef(model1))
+# exp(confint(model1))
+
+# Example: Pain prevalence prediction
+# model2 <- glm(as.numeric(pain_prev) - 1 ~ int_bfl_r + age + gen + bmi,
+#               data = df, family = binomial(link = "logit"))
+# summary(model2)
+# exp(coef(model2))
+```
+
+## 11.3 Cross-tabulations
+
+```{r crosstabs}
+# HSSI vs Pain prevalence
+table_hssi_pain <- table(df$HSSI_binary, df$pain_prev)
+kable(table_hssi_pain, caption = "HSSI Level vs Pain Prevalence")
+
+# Calculate proportions
+prop_table <- prop.table(table_hssi_pain, margin = 1) * 100
+kable(round(prop_table, 1), caption = "HSSI Level vs Pain Prevalence (%)")
+```
+
+# 12. Correlation Analysis
+
+```{r correlations, fig.width=10, fig.height=8}
+# Select numeric variables for correlation
+cor_vars <- df %>%
+  select(HSSI_scr, pred_hssi_sub, mod_hssi_sub, out_hssi_sub,
+         pain_sum_scaled, age, bmi) %>%
+  na.omit()
+
+# Calculate correlation matrix
+cor_matrix <- cor(cor_vars)
+
+# Create correlation plot
+library(reshape2)
+cor_melted <- melt(cor_matrix)
+
+ggplot(cor_melted, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  geom_text(aes(label = round(value, 2)), color = "white", size = 3) +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                      midpoint = 0, limit = c(-1,1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Correlation Matrix",
+       x = "", y = "", fill = "Correlation")
+```
+
+# 13. Summary Tables
+
+## 13.1 Overall Sample Characteristics
+
+```{r sample-characteristics}
+# Create summary table
+summary_table <- data.frame(
+  Variable = c("Age (years)", "BMI (kg/m²)", "HSSI Score", "Pain Score (scaled)"),
+  Mean = c(
+    mean(df$age, na.rm = TRUE),
+    mean(df$bmi, na.rm = TRUE),
+    mean(df$HSSI_scr, na.rm = TRUE),
+    mean(df$pain_sum_scaled, na.rm = TRUE)
+  ),
+  SD = c(
+    sd(df$age, na.rm = TRUE),
+    sd(df$bmi, na.rm = TRUE),
+    sd(df$HSSI_scr, na.rm = TRUE),
+    sd(df$pain_sum_scaled, na.rm = TRUE)
+  ),
+  Min = c(
+    min(df$age, na.rm = TRUE),
+    min(df$bmi, na.rm = TRUE),
+    min(df$HSSI_scr, na.rm = TRUE),
+    min(df$pain_sum_scaled, na.rm = TRUE)
+  ),
+  Max = c(
+    max(df$age, na.rm = TRUE),
+    max(df$bmi, na.rm = TRUE),
+    max(df$HSSI_scr, na.rm = TRUE),
+    max(df$pain_sum_scaled, na.rm = TRUE)
+  )
+)
+
+kable(summary_table, digits = 2, caption = "Overall Sample Characteristics")
+```
+
+## 13.2 HSSI Subscore Summary
+
+```{r hssi-subscores-summary}
+hssi_sub_summary <- data.frame(
+  Subscore = c("Predictors", "Moderators", "Outcomes"),
+  Mean = c(
+    mean(df$pred_hssi_sub, na.rm = TRUE),
+    mean(df$mod_hssi_sub, na.rm = TRUE),
+    mean(df$out_hssi_sub, na.rm = TRUE)
+  ),
+  SD = c(
+    sd(df$pred_hssi_sub, na.rm = TRUE),
+    sd(df$mod_hssi_sub, na.rm = TRUE),
+    sd(df$out_hssi_sub, na.rm = TRUE)
+  ),
+  Min = c(
+    min(df$pred_hssi_sub, na.rm = TRUE),
+    min(df$mod_hssi_sub, na.rm = TRUE),
+    min(df$out_hssi_sub, na.rm = TRUE)
+  ),
+  Max = c(
+    max(df$pred_hssi_sub, na.rm = TRUE),
+    max(df$mod_hssi_sub, na.rm = TRUE),
+    max(df$out_hssi_sub, na.rm = TRUE)
+  )
+)
+
+kable(hssi_sub_summary, digits = 2, caption = "HSSI Subscore Summary")
+```
+
+# 14. Export Data
+
+```{r export-data, eval=FALSE}
+# Save processed dataset
+saveRDS(df, "WLFF_processed_data.rds")
+
+# Export to CSV
+write.csv(df, "WLFF_processed_data.csv", row.names = FALSE)
+```
+
+# 15. Session Information
+
+```{r session-info}
+sessionInfo()
+```
+
+---
+
+## Notes
+
+- Adjust file paths as needed for your directory structure
+- Uncomment logistic regression models to run statistical analyses
+- Modify visualizations as needed for presentations or publications
+- Remember to handle missing data appropriately for your specific analyses
+
+## References
+
+Add relevant references for the HSSI methodology and study design here.
